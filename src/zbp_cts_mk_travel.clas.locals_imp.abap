@@ -18,7 +18,9 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD earlynumbering_create.
 
+** Mohankumar
 
+    DATA: lv_id TYPE string.
     DATA: entity        TYPE STRUCTURE FOR CREATE ZCTS_MK_TRavel,
           travel_id_max TYPE /dmo/travel_id.
 
