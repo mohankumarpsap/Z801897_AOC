@@ -1,0 +1,129 @@
+@Metadata.layer: #CUSTOMER
+@UI.headerInfo: { typeName: 'Travel',
+                  typeNamePlural: 'Travels',
+                  title: { value: 'TravelId' },
+                  description: { value: '_Customer.FirstName' }
+                  }
+annotate entity ZCTS_MK_Travel_Processor with
+{
+  @UI.facet: [
+                  {
+                  purpose: #HEADER,
+                  type: #DATAPOINT_REFERENCE,
+                  position: 10,
+                  targetQualifier:'price_data',
+                  label: 'Flight Ticket Price'
+                  },
+                  {
+                  purpose: #HEADER,
+                  type: #DATAPOINT_REFERENCE,
+                  position: 20,
+                  targetQualifier:'status',
+                  label: 'Status'
+                  },
+                  {
+                  purpose: #STANDARD,
+                  type: #COLLECTION,
+                  position: 10,
+                  id: 'Super',
+                  label :' Additional Details'
+                   },
+                   
+                  {
+                  purpose: #STANDARD,
+                  type: #IDENTIFICATION_REFERENCE,
+                  position: 10,
+                  label: 'More Info',
+                  parentId: 'Super'
+
+                  },
+
+                  {
+                  purpose: #STANDARD,
+                  type: #FIELDGROUP_REFERENCE,
+                  label: 'Price data',
+                  position: 20,
+                  parentId: 'Super',
+                  targetQualifier: 'pricing'
+                  },
+
+
+                  {
+                  purpose: #STANDARD,
+                  type: #FIELDGROUP_REFERENCE,
+                  label: 'Dates',
+                  parentId: 'Super',
+                  targetQualifier: 'dates',
+                  position: 30
+
+                  },
+
+                { 
+                    purpose: #STANDARD,
+                    type: #LINEITEM_REFERENCE,
+                    position: 20,
+                    label: 'Bookings',
+                    targetElement: '_Booking'
+                  }
+
+  //                  {
+  //                  purpose: #STANDARD,
+  //                  type: #FIELDGROUP_REFERENCE,
+  //                  label: 'Administrative Data',
+  //                  parentId: 'Super',
+  //                  targetQualifier: 'admin',
+  //                  position: 40
+  //
+  //                  }
+
+          ]
+
+  @UI.selectionField: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10 }]
+  @UI.identification: [{ position: 10 }]
+  TravelId;
+  @UI.selectionField: [{ position: 20 }]
+  @UI.lineItem: [{ position: 20 }]
+  @UI.identification: [{ position: 20 }]
+  AgencyId;
+  @UI.selectionField: [{ position: 30 }]
+  @UI.lineItem: [{ position: 30 }]
+  @UI.identification: [{ position: 30 }]
+  CustomerId;
+  @UI.lineItem: [{ position: 40 }]
+  @UI.fieldGroup: [{ qualifier: 'dates', label: 'Begin Date', position: 10 }]
+  BeginDate;
+  @UI.fieldGroup: [{ qualifier: 'dates', label: 'End Date', position: 20 }]
+  EndDate;
+  @UI.fieldGroup: [{ qualifier: 'pricing', label: 'Booking Fee', position: 10 }]
+  BookingFee;
+  @UI.selectionField: [{ position: 40 }]
+  @UI.lineItem: [{ position: 50 }]
+  @UI.dataPoint: { qualifier: 'price_data', title: 'Flight Price' }
+  @UI.fieldGroup: [{ qualifier: 'pricing', label: 'Total Price', position: 20 }]
+  TotalPrice;
+  //@UI.lineItem: [{ position: 60 }]
+  @UI.fieldGroup: [{ qualifier: 'pricing', label: 'Currency Code', position: 30 }]
+  CurrencyCode;
+  //Description;
+  @UI.selectionField: [{ position: 50 }]
+  @UI.lineItem: [{ position: 70, criticality: 'criticality', importance: #HIGH }]
+  @UI.dataPoint: { qualifier: 'status',title: 'Travel Status', criticality: 'criticality' }
+  @UI.fieldGroup: [{ qualifier: 'dates', label: 'Status', position: 30 }]
+  OverallStatus;
+  //@UI.selectionField: [{ position: 50 }]
+  //@UI.lineItem: [{ position: 70 }]
+  //StatusText;
+  //@UI.selectionField: [{ position: 60 }]
+  //@UI.lineItem: [{ position: 80, criticality: 'criticality' }]
+  //criticality;
+
+  @UI.fieldGroup: [{  qualifier: 'admin', label: 'Created By', position: 10 }]
+  CreatedBy;
+  @UI.fieldGroup: [{ qualifier: 'admin', label: 'Cretaed At', position: 20 }]
+  CreatedAt;
+  @UI.fieldGroup: [{ qualifier: 'admin', label: 'Last Changed By', position: 30 }]
+  LastChangedBy;
+  @UI.fieldGroup: [{ qualifier: 'admin', label: 'Last Changed At', position: 40 }]
+  LastChangedAt;
+}

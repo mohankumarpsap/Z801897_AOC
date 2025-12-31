@@ -1,0 +1,5 @@
+CLASS zbp_cts_mk_booksuppl DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zcts_mk_travel.
+ENDCLASS.
+
+CLASS zbp_cts_mk_booksuppl IMPLEMENTATION.
+ENDCLASS.

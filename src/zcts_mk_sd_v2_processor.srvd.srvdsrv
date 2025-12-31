@@ -1,0 +1,12 @@
+@EndUserText.label: 'Processor App Service'
+define service ZCTS_MK_SD_V2_PROCESSOR {
+  expose ZCTS_MK_Travel_Processor   as Travel;
+  expose ZCTS_MK_Booking_Processor  as Boolking;
+  expose ZCTS_MK_Boosuppl_Processor as BookingSupplement;
+  expose /DMO/I_Agency              as Agency;
+  expose /DMO/I_Customer            as customer;
+  expose /DMO/I_Carrier             as Carrier;
+  expose /DMO/I_Connection          as Connection;
+  expose /DMO/I_Overall_Status_VH   as OverallStatus;
+  expose /DMO/I_Booking_Status_VH   as BookingStatus;
+}

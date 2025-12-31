@@ -1,0 +1,32 @@
+@Metadata.layer: #CORE
+annotate entity ZCTS_MK_Boosuppl_Processor with
+{
+
+
+  @UI.facet: [{
+
+  purpose: #STANDARD,
+  type: #IDENTIFICATION_REFERENCE,
+  label: 'Booking Supplement',
+  position: 20
+   }]
+  @UI.lineItem: [{ position: 10 }]
+  @UI.identification: [{ position: 10 }]
+  BookingSupplementId;
+  @UI.lineItem: [{ position: 20 }]
+  @UI.identification: [{ position: 20 }]
+  SupplementId;
+  @UI.lineItem: [{ position: 30 }]
+  @UI.identification: [{ position: 30 }]
+  Price;
+  @UI.lineItem: [{ position: 40 }]
+  @UI.identification: [{ position: 40 }]
+  CurrencyCode;
+  @UI.lineItem: [{ position: 50 }]
+  @UI.identification: [{ position: 50 }]
+  LastChangedAt;
+  /* Associations */
+  //  _Booking;
+  //  _Travel;
+
+}

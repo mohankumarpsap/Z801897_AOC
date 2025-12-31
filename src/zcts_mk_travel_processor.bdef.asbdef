@@ -1,0 +1,29 @@
+projection;
+//strict ( 2 );
+
+define behavior for ZCTS_MK_Travel_Processor alias Travel
+{
+  use create;
+  use update;
+  use delete;
+
+  use association _Booking { create; }
+}
+
+define behavior for ZCTS_MK_Booking_Processor alias booking
+{
+  use update;
+  use delete;
+
+  use association _Travel;
+  use association _Bookingsupplement { create; }
+}
+
+define behavior for ZCTS_MK_Boosuppl_Processor alias BookingSupplement
+{
+  use update;
+  use delete;
+
+  use association _Booking;
+  use association _Travel;
+}
