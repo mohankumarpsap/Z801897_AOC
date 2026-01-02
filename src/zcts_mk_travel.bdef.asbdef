@@ -1,6 +1,6 @@
 managed;
 //Guideline 0202: Use strict mode in behavior definitions and best practice implementations
-// strict ( 2 );
+ strict ( 2 );
 
 
 // Behavior Definition for Root Entity: ZCTS_MK_Travel
@@ -12,13 +12,12 @@ persistent table /dmo/travel_m
 // Lock master - how the framework should handle locking for concurrent access
 // for instances when the Travel entity is locked, other users can not edit the child entities like Booking and BookingSupplement
 lock master
-// Authorization master - how the framework should handle authorization checks
+authorization master ( instance ) //- how the framework should handle authorization checks
 // it controls the permissions for creating, updating, and deleting Travel instances and security settings for RAP BO
 //authorization master ( instance )
+
 //etag master <field_name> "Concurrency control field for optimistic locking"
 // based on the timestamp field LastChangedAt in the Travel table
-//early numbering
-//early numbering
 etag master LastChangedAt
 early numbering
 {
@@ -29,6 +28,8 @@ early numbering
   // A booking can only be created in the context of a travel like first sales order header and then sales order items
   field ( readonly : update ) TravelId;  //field ( numbering : managed ) TravelId;
   association _Booking { create; }
+
+//  factory action copyTravel[1];
 
   mapping for /dmo/travel_m
     {
@@ -54,6 +55,7 @@ define behavior for ZCTS_MK_Booking alias Booking
 implementation in class zbp_cts_mk_booking unique
 persistent table /dmo/booking_m
 lock dependent by _Travel
+authorization master ( instance )
 //authorization dependent by _Travel
 //early numbering
 etag master LastChangedAt
@@ -88,6 +90,7 @@ define behavior for ZCTS_MK_Booksuppl alias BookingSupplement
 implementation in class zbp_cts_mk_booksuppl unique
 persistent table /dmo/booksuppl_m
 lock dependent by _Travel
+authorization master ( instance )
 //authorization dependent by _Travel
 etag master LastChangedAt
 early numbering

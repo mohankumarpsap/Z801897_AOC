@@ -3,6 +3,11 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
       IMPORTING REQUEST requested_authorizations FOR Travel RESULT result.
+    METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
+      IMPORTING keys REQUEST requested_authorizations FOR Travel RESULT result.
+
+*    METHODS copyTravel FOR MODIFY
+*      IMPORTING keys FOR ACTION Travel~copyTravel.
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE Travel.
 
@@ -18,9 +23,6 @@ CLASS lhc_Travel IMPLEMENTATION.
 
   METHOD earlynumbering_create.
 
-** Mohankumar
-
-    DATA: lv_id TYPE string.
     DATA: entity        TYPE STRUCTURE FOR CREATE ZCTS_MK_TRavel,
           travel_id_max TYPE /dmo/travel_id.
 
@@ -166,8 +168,6 @@ CLASS lhc_Travel IMPLEMENTATION.
 **      ENDLOOP.
 **    ENDLOOP.
 
-
-
     DATA: max_booking_id TYPE /dmo/booking_id.
 
     "1. Get all the travel requests and their booking data
@@ -216,6 +216,13 @@ CLASS lhc_Travel IMPLEMENTATION.
       ENDLOOP.
     ENDLOOP.
 
+  ENDMETHOD.
+
+*  METHOD copyTravel.
+*
+*  ENDMETHOD.
+
+  METHOD get_instance_authorizations.
   ENDMETHOD.
 
 ENDCLASS.

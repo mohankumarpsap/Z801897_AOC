@@ -1,11 +1,13 @@
 projection;
-//strict ( 2 );
+strict ( 2 );
 
 define behavior for ZCTS_MK_Travel_Processor alias Travel
 {
   use create;
   use update;
   use delete;
+
+//  use action copyTravel;
 
   use association _Booking { create; }
 }

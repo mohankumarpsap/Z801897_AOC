@@ -28,7 +28,7 @@ annotate entity ZCTS_MK_Travel_Processor with
                   id: 'Super',
                   label :' Additional Details'
                    },
-                   
+
                   {
                   purpose: #STANDARD,
                   type: #IDENTIFICATION_REFERENCE,
@@ -58,7 +58,7 @@ annotate entity ZCTS_MK_Travel_Processor with
 
                   },
 
-                { 
+                {
                     purpose: #STANDARD,
                     type: #LINEITEM_REFERENCE,
                     position: 20,
@@ -79,7 +79,7 @@ annotate entity ZCTS_MK_Travel_Processor with
           ]
 
   @UI.selectionField: [{ position: 10 }]
-  @UI.lineItem: [{ position: 10 }]
+  @UI.lineItem: [{ position: 10, type : #FOR_ACTION, label : 'copy Travel', dataAction: 'copyTravel'}] // To enable button
   @UI.identification: [{ position: 10 }]
   TravelId;
   @UI.selectionField: [{ position: 20 }]
