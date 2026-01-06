@@ -1,6 +1,7 @@
 managed;
 //Guideline 0202: Use strict mode in behavior definitions and best practice implementations
- strict ( 2 );
+strict ( 2 );
+with draft;
 
 
 // Behavior Definition for Root Entity: ZCTS_MK_Travel
@@ -9,9 +10,11 @@ define behavior for ZCTS_MK_TRavel alias Travel
 implementation in class zbp_cts_mk_travel unique
 // telling the framework which database table to use for CRUD operations
 persistent table /dmo/travel_m
+draft table zctsmk_travel_d
 // Lock master - how the framework should handle locking for concurrent access
 // for instances when the Travel entity is locked, other users can not edit the child entities like Booking and BookingSupplement
 lock master
+total etag LastChangedAt
 authorization master ( instance ) //- how the framework should handle authorization checks
 // it controls the permissions for creating, updating, and deleting Travel instances and security settings for RAP BO
 //authorization master ( instance )
@@ -27,9 +30,23 @@ early numbering
   delete;
   // A booking can only be created in the context of a travel like first sales order header and then sales order items
   field ( readonly : update ) TravelId;  //field ( numbering : managed ) TravelId;
-  association _Booking { create; }
+  //  association _Booking { create (features : instance); with draft; }
+  association _Booking { create; with draft; }
 
-//  factory action copyTravel[1];
+
+  //  factory action copyTravel[1];
+
+  field ( readonly ) CreatedBy, LastChangedBy, CreatedAt, LastChangedAt;
+  field ( mandatory ) AgencyId, CustomerId;
+
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+  draft action Resume;
+  internal draft action AdditionalSave;
+  draft determine action Prepare;
+
+  determination calculateTotalPrice on modify { create; field BookingFee, CurrencyCode; }
 
   mapping for /dmo/travel_m
     {
@@ -54,6 +71,7 @@ define behavior for ZCTS_MK_Booking alias Booking
 // Make the Behavior pool/implementation for Booking
 implementation in class zbp_cts_mk_booking unique
 persistent table /dmo/booking_m
+draft table zctsmk_book_d
 lock dependent by _Travel
 authorization master ( instance )
 //authorization dependent by _Travel
@@ -64,8 +82,8 @@ early numbering
   update;
   delete;
   field ( readonly : update ) TravelId, BookingId;
-  association _Travel;
-  association _Bookingsupplement { create; }
+  association _Travel { with draft; }
+  association _Bookingsupplement { create; with draft; }
 
 
   mapping for /dmo/booking_m
@@ -89,6 +107,7 @@ define behavior for ZCTS_MK_Booksuppl alias BookingSupplement
 // Make the Behavior pool/implementation for Booking Supplement
 implementation in class zbp_cts_mk_booksuppl unique
 persistent table /dmo/booksuppl_m
+draft table zctsmk_suppl_d
 lock dependent by _Travel
 authorization master ( instance )
 //authorization dependent by _Travel
@@ -98,8 +117,8 @@ early numbering
   update;
   delete;
   field ( readonly : update ) TravelId, BookingId, BookingSupplementId;
-  association _Travel;
-  association _Booking;
+  association _Travel { with draft; }
+  association _Booking { with draft; }
 
   mapping for /dmo/booksuppl_m
     {

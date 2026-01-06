@@ -64,17 +64,16 @@ annotate entity ZCTS_MK_Travel_Processor with
                     position: 20,
                     label: 'Bookings',
                     targetElement: '_Booking'
-                  }
+                  },
 
-  //                  {
-  //                  purpose: #STANDARD,
-  //                  type: #FIELDGROUP_REFERENCE,
-  //                  label: 'Administrative Data',
-  //                  parentId: 'Super',
-  //                  targetQualifier: 'admin',
-  //                  position: 40
-  //
-  //                  }
+                   {
+                    purpose: #STANDARD,
+                    type: #FIELDGROUP_REFERENCE,
+                    label: 'Administrative Data',
+                    parentId: 'Super',
+                    targetQualifier: 'admin',
+                    position: 40
+                     }
 
           ]
 

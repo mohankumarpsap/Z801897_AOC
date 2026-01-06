@@ -5,9 +5,18 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING REQUEST requested_authorizations FOR Travel RESULT result.
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR Travel RESULT result.
+    METHODS additionalsave FOR MODIFY
+      IMPORTING keys FOR ACTION travel~additionalsave.
 
-*    METHODS copyTravel FOR MODIFY
-*      IMPORTING keys FOR ACTION Travel~copyTravel.
+*    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+*      IMPORTING keys FOR travel~calculatetotalprice.
+
+*    METHODS get_instance_features FOR INSTANCE FEATURES
+*      IMPORTING keys REQUEST requested_features FOR travel RESULT result.
+
+*    METHODS copytravel FOR MODIFY
+*      IMPORTING keys FOR ACTION travel~copytravel.
+
     METHODS earlynumbering_create FOR NUMBERING
       IMPORTING entities FOR CREATE Travel.
 
@@ -104,125 +113,159 @@ CLASS lhc_Travel IMPLEMENTATION.
       entity-TravelId = travel_id_max.
 
       APPEND VALUE #(  %cid = entity-%cid
-                       %key = entity-%key ) TO mapped-travel.
+                       %key = entity-%key
+                       %is_draft = entity-%is_draft
+                       ) TO mapped-travel.
     ENDLOOP.
 
   ENDMETHOD.
 
   METHOD earlynumbering_cba_Booking.
 
-**    DATA max_booking_id TYPE /dmo/booking_id VALUE '0'.
-**
-**    " Get all the travel requests and their booking data
-**    READ ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
-**    ENTITY Travel
-**    BY \_Booking
-**    FROM CORRESPONDING #( entities )
-**    LINK DATA(bookings).
-**
-**
-**    "Loop at Unique travel IDs
-**    LOOP AT entities ASSIGNING FIELD-SYMBOL(<travel_group>)
-**           GROUP BY <travel_group>-TravelId.
-**
-**      " 1️. Get highest BookingId from DB
-**      LOOP AT bookings INTO DATA(ls_booking)
-**           USING KEY entity
-**           WHERE source-TravelId = <travel_group>-TravelId.
-**
-**        IF max_booking_id < ls_booking-target-BookingId.
-**          max_booking_id = ls_booking-target-BookingId.
-**        ENDIF.
-**
-**      ENDLOOP.
-**
-**      " 2️. Get highest BookingId from incoming request
-**      LOOP AT entities INTO DATA(ls_entity)
-**           USING KEY entity
-**           WHERE TravelId = <travel_group>-TravelId.
-**
-**        LOOP AT ls_entity-%target INTO DATA(ls_target).
-**          IF max_booking_id < ls_target-BookingId.
-**            max_booking_id = ls_target-BookingId.
-**          ENDIF.
-**        ENDLOOP.
-**
-**      ENDLOOP.
-**
-**      " 3️. Assign new BookingIds
-**      LOOP AT entities ASSIGNING FIELD-SYMBOL(<travel>)
-**           USING KEY entity
-**           WHERE TravelId = <travel_group>-TravelId.
-**
-**        LOOP AT <travel>-%target ASSIGNING FIELD-SYMBOL(<booking>).
-**
-**          APPEND CORRESPONDING #( <booking> )
-**            TO mapped-booking ASSIGNING FIELD-SYMBOL(<mapped_booking>).
-**
-**          IF <mapped_booking>-BookingId IS INITIAL.
-**            max_booking_id += 10.
-**            <mapped_booking>-BookingId = max_booking_id.
-**          ENDIF.
-**
-**        ENDLOOP.
-**      ENDLOOP.
-**    ENDLOOP.
+    DATA max_booking_id TYPE /dmo/booking_id VALUE '0'.
 
-    DATA: max_booking_id TYPE /dmo/booking_id.
-
-    "1. Get all the travel requests and their booking data
+    " Get all the travel requests and their booking data
     READ ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
     ENTITY Travel
     BY \_Booking
     FROM CORRESPONDING #( entities )
     LINK DATA(bookings).
 
-    "Loop at Unique travel IDs
-    LOOP AT entities  ASSIGNING FIELD-SYMBOL(<travel_group>) GROUP BY <travel_group>-TravelId.
 
-      "2. get the highest number of booking number which is already there ( in DB ).
-      LOOP AT bookings INTO DATA(ls_bookings) USING KEY entity
-      WHERE source-TravelId = <travel_group>-TravelId.
-        IF  max_booking_id < ls_bookings-target-BookingId.
-          max_booking_id = ls_bookings-target-BookingId.
+    "Loop at Unique travel IDs
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<travel_group>)
+           GROUP BY <travel_group>-TravelId.
+
+      " 1️. Get highest BookingId from DB
+      LOOP AT bookings INTO DATA(ls_booking)
+           USING KEY entity
+           WHERE source-TravelId = <travel_group>-TravelId.
+
+        IF max_booking_id < ls_booking-target-BookingId.
+          max_booking_id = ls_booking-target-BookingId.
         ENDIF.
+
       ENDLOOP.
 
-      "3. get the assigned booking number for incoming request
-      LOOP AT entities INTO DATA(ls_entity) USING KEY entity
-     WHERE TravelId = <travel_group>-TravelId.
+      " 2️. Get highest BookingId from incoming request
+      LOOP AT entities INTO DATA(ls_entity)
+           USING KEY entity
+           WHERE TravelId = <travel_group>-TravelId.
+
         LOOP AT ls_entity-%target INTO DATA(ls_target).
-          IF  max_booking_id < ls_target-BookingId.
+          IF max_booking_id < ls_target-BookingId.
             max_booking_id = ls_target-BookingId.
           ENDIF.
         ENDLOOP.
+
       ENDLOOP.
-      "4. loop over all the entries of travel with same travel ID
+
+      " 3️. Assign new BookingIds
       LOOP AT entities ASSIGNING FIELD-SYMBOL(<travel>)
-       USING KEY entity WHERE TravelId = <travel_group>-TravelId.
+           USING KEY entity
+           WHERE TravelId = <travel_group>-TravelId.
 
-        "5. Assign new booking to the booking entity inside each travel
-        LOOP AT <travel>-%target ASSIGNING FIELD-SYMBOL(<booking_wo_travel>).
-          APPEND CORRESPONDING #( <booking_wo_travel> ) TO mapped-booking
-          ASSIGNING FIELD-SYMBOL(<mapped_booking>).
+        LOOP AT <travel>-%target ASSIGNING FIELD-SYMBOL(<booking>).
 
-          IF  <mapped_booking>-BookingId IS INITIAL.
+          APPEND CORRESPONDING #( <booking> )
+            TO mapped-booking ASSIGNING FIELD-SYMBOL(<mapped_booking>).
+
+          IF <mapped_booking>-BookingId IS INITIAL.
             max_booking_id += 10.
-            <mapped_booking>-BookingId  = max_booking_id.
+            <mapped_booking>-%is_draft = <booking>-%is_draft.
+            <mapped_booking>-BookingId = max_booking_id.
           ENDIF.
 
         ENDLOOP.
-
       ENDLOOP.
     ENDLOOP.
 
-  ENDMETHOD.
 
-*  METHOD copyTravel.
+    " OWN Style
+*    DATA: max_booking_id TYPE /dmo/booking_id.
 *
-*  ENDMETHOD.
+*    "1. Get all the travel requests and their booking data
+*    READ ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+*    ENTITY Travel
+*    BY \_Booking
+*    FROM CORRESPONDING #( entities )
+*    LINK DATA(bookings).
+*
+*    "Loop at Unique travel IDs
+*    LOOP AT entities  ASSIGNING FIELD-SYMBOL(<travel_group>) GROUP BY <travel_group>-TravelId.
+*
+*      "2. get the highest number of booking number which is already there ( in DB ).
+*      LOOP AT bookings INTO DATA(ls_bookings) USING KEY entity
+*      WHERE source-TravelId = <travel_group>-TravelId.
+*        IF  max_booking_id < ls_bookings-target-BookingId.
+*          max_booking_id = ls_bookings-target-BookingId.
+*        ENDIF.
+*      ENDLOOP.
+*
+*      "3. get the assigned booking number for incoming request
+*      LOOP AT entities INTO DATA(ls_entity) USING KEY entity
+*     WHERE TravelId = <travel_group>-TravelId.
+*        LOOP AT ls_entity-%target INTO DATA(ls_target).
+*          IF  max_booking_id < ls_target-BookingId.
+*            max_booking_id = ls_target-BookingId.
+*          ENDIF.
+*        ENDLOOP.
+*      ENDLOOP.
+*      "4. loop over all the entries of travel with same travel ID
+*      LOOP AT entities ASSIGNING FIELD-SYMBOL(<travel>)
+*       USING KEY entity WHERE TravelId = <travel_group>-TravelId.
+*
+*        "5. Assign new booking to the booking entity inside each travel
+*        LOOP AT <travel>-%target ASSIGNING FIELD-SYMBOL(<booking_wo_travel>).
+*          APPEND CORRESPONDING #( <booking_wo_travel> ) TO mapped-booking
+*          ASSIGNING FIELD-SYMBOL(<mapped_booking>).
+*
+*          IF  <mapped_booking>-BookingId IS INITIAL.
+*            max_booking_id += 10.
+*            <mapped_booking>-BookingId  = max_booking_id.
+*          ENDIF.
+*
+*        ENDLOOP.
+*
+*      ENDLOOP.
+*    ENDLOOP.
+
+  ENDMETHOD.
 
   METHOD get_instance_authorizations.
   ENDMETHOD.
+
+*  METHOD copyTravel.
+*  ENDMETHOD.
+
+*  METHOD get_instance_features.
+*
+*    READ ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+*    ENTITY Travel
+*    ALL FIELDS WITH CORRESPONDING #( keys )
+*    RESULT DATA(lt_result).
+*
+*    READ TABLE lt_result INDEX 1 INTO DATA(ls_result).
+*    IF ls_result-OverallStatus = 'X'.
+*      DATA(lv_allow) = if_abap_behv=>fc-o-disabled.
+*    ELSE.
+*      lv_allow = if_abap_behv=>fc-o-enabled.
+*    ENDIF.
+*
+*    result = VALUE #( FOR travel IN lt_result ( %tky = travel-%tky %assoc-_Booking = lv_allow ) ).
+*
+*  ENDMETHOD.
+
+  METHOD AdditionalSave.
+  ENDMETHOD.
+
+*  METHOD calculateTotalPrice.
+*
+*    MODIFY ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+*    ENTITY Travel
+*    EXECUTE reCalcTotalPrice
+*    FROM CORRESPONDING #( keys ).
+*
+*  ENDMETHOD.
 
 ENDCLASS.

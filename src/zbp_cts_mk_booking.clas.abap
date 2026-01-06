@@ -1,3 +1,4 @@
+"! <p class="shorttext synchronized" lang="en">Behavior Implementation for ZCTS_MK_TRAVEL</p>
 CLASS zbp_cts_mk_booking DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zcts_mk_travel.
 ENDCLASS.
 
