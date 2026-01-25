@@ -1,4 +1,10 @@
 CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
+
+  PUBLIC SECTION.
+
+    METHODS precheck_reuse.
+
+
   PRIVATE SECTION.
 
     METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
@@ -7,9 +13,16 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_authorizations FOR Travel RESULT result.
     METHODS additionalsave FOR MODIFY
       IMPORTING keys FOR ACTION travel~additionalsave.
+    METHODS recalctotalprice FOR MODIFY
+      IMPORTING keys FOR ACTION travel~recalctotalprice.
 
-*    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
-*      IMPORTING keys FOR travel~calculatetotalprice.
+    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR travel~calculatetotalprice.
+    METHODS precheck_create FOR PRECHECK
+      IMPORTING entities FOR CREATE travel.
+
+    METHODS precheck_update FOR PRECHECK
+      IMPORTING entities FOR UPDATE travel.
 
 *    METHODS get_instance_features FOR INSTANCE FEATURES
 *      IMPORTING keys REQUEST requested_features FOR travel RESULT result.
@@ -22,6 +35,12 @@ CLASS lhc_Travel DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS earlynumbering_cba_Booking FOR NUMBERING
       IMPORTING entities FOR CREATE Travel\_Booking.
+
+
+    TYPES: t_entity_create  TYPE TABLE FOR CREATE ZCTS_MK_TRavel,
+           t_enitity_update TYPE TABLE FOR UPDATE ZCTS_MK_TRavel,
+           t_entity_rep     TYPE TABLE FOR REPORTED ZCTS_MK_TRavel,
+           t_entity_r       TYPE TABLE FOR FAILED ZCTS_MK_TRavel.
 
 ENDCLASS.
 
@@ -259,13 +278,125 @@ CLASS lhc_Travel IMPLEMENTATION.
   METHOD AdditionalSave.
   ENDMETHOD.
 
-*  METHOD calculateTotalPrice.
-*
-*    MODIFY ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
-*    ENTITY Travel
-*    EXECUTE reCalcTotalPrice
-*    FROM CORRESPONDING #( keys ).
-*
-*  ENDMETHOD.
+
+  METHOD ReCalcTotalPrice.
+    TYPES:BEGIN OF ty_amount_per_currencycode,
+            amount        TYPE /dmo/total_price,
+            currency_code TYPE /dmo/currency_code,
+          END OF ty_amount_per_currencycode.
+
+    DATA: amounts_per_currencycode TYPE STANDARD TABLE OF ty_amount_per_currencycode.
+
+    " Read all relevant travel instances.
+    READ ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+    ENTITY Travel
+    FIELDS (  BookingFee CurrencyCode )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(travels).
+
+    DELETE travels WHERE currencycode IS INITIAL.
+
+    " Read all associated bookings and add them to the total price.
+    READ ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+    ENTITY Travel BY \_Booking
+    FIELDS (  FlightPrice CurrencyCode )
+    WITH CORRESPONDING #( travels )
+    RESULT DATA(bookings).
+
+    " Read all associated booking supplements and add them to the total price.
+    READ ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+    ENTITY Booking BY \_Bookingsupplement
+    FIELDS ( Price CurrencyCode )
+    WITH CORRESPONDING #( bookings )
+    RESULT DATA(bookingsupplements).
+
+
+    LOOP AT travels ASSIGNING FIELD-SYMBOL(<travels>).
+
+      amounts_per_currencycode = VALUE #( (
+      amount =  <travels>-BookingFee
+      currency_code = <travels>-CurrencyCode ) ).
+
+      LOOP AT bookings ASSIGNING FIELD-SYMBOL(<bookings>)
+      WHERE TravelId = <travels>-TravelId.
+        " Set the start for the calculation by adding the booking fee
+        COLLECT VALUE ty_amount_per_currencycode(
+        amount =  <bookings>-FlightPrice
+        currency_code = <bookings>-CurrencyCode )
+        INTO amounts_per_currencycode.
+
+        LOOP AT bookingsupplements ASSIGNING FIELD-SYMBOL(<supplements>)
+        WHERE TravelId = <bookings>-TravelId
+          AND BookingId = <bookings>-BookingId.
+
+          COLLECT VALUE ty_amount_per_currencycode(
+          amount = <supplements>-Price
+          currency_code = <supplements>-CurrencyCode )
+          INTO amounts_per_currencycode.
+
+        ENDLOOP.
+      ENDLOOP.
+
+
+      DELETE amounts_per_currencycode WHERE currency_code IS INITIAL.
+
+      LOOP AT amounts_per_currencycode ASSIGNING FIELD-SYMBOL(<amounts_per_currencycode>).
+        CLEAR <travels>-TotalPrice.
+        " If needed do a Currency Conversion
+        IF <amounts_per_currencycode>-currency_code = <travels>-CurrencyCode.
+          <travels>-TotalPrice += <amounts_per_currencycode>-amount.
+
+        ELSE.
+
+          /dmo/cl_flight_amdp=>convert_currency(
+            EXPORTING
+              iv_amount               =  <amounts_per_currencycode>-amount
+              iv_currency_code_source =  <amounts_per_currencycode>-currency_code
+              iv_currency_code_target =  <travels>-CurrencyCode
+              iv_exchange_rate_date   =  CONV #( cl_abap_context_info=>get_system_date(  ) )
+          IMPORTING
+            ev_amount               = DATA(total_booking_price_per_curr)
+          ).
+
+          <travels>-TotalPrice += total_booking_price_per_curr.
+
+        ENDIF.
+
+      ENDLOOP.
+
+    ENDLOOP.
+
+
+    " write back the modified total_price of travels
+    MODIFY ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+    ENTITY Travel
+    UPDATE FIELDS ( TotalPrice )
+    WITH CORRESPONDING #( travels )
+    MAPPED DATA(lt_mapped)
+    FAILED DATA(lt_failed)
+    REPORTED DATA(lt_reported).
+
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+
+    MODIFY ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+    ENTITY Travel
+    EXECUTE ReCalcTotalPrice
+    FROM CORRESPONDING #( keys ) .
+
+  ENDMETHOD.
+
+  METHOD precheck_create.
+  ENDMETHOD.
+
+  METHOD precheck_update.
+  ENDMETHOD.
+
+  METHOD precheck_reuse.
+
+
+
+  ENDMETHOD.
 
 ENDCLASS.

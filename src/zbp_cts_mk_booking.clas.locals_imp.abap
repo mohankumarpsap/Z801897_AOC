@@ -6,6 +6,8 @@ CLASS lhc_booking DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING entities FOR CREATE Booking\_Bookingsupplement.
     METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
       IMPORTING keys REQUEST requested_authorizations FOR Booking RESULT result.
+    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR booking~calculatetotalprice.
 
 ENDCLASS.
 
@@ -69,7 +71,7 @@ CLASS lhc_booking IMPLEMENTATION.
     ENDLOOP.
 
 
-"Own Style
+    "Own Style
 *    DATA: max_booking_suppl_id TYPE /dmo/booking_supplement_id.
 *
 *    "1. Get all the travel requests and their booking data
@@ -131,6 +133,24 @@ CLASS lhc_booking IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_instance_authorizations.
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+
+*    DATA: travel_ids  TYPE TABLE OF /dmo/i_travel_m WITH UNIQUE HASHED KEY key COMPONENTS travel_id.
+    DATA: travel_ids  TYPE TABLE OF ZCTS_MK_Travel_Processor WITH UNIQUE HASHED KEY key COMPONENTS TravelId.
+
+    travel_ids = CORRESPONDING #( keys DISCARDING DUPLICATES MAPPING TravelId = TravelId ).
+
+    MODIFY ENTITIES OF ZCTS_MK_TRavel IN LOCAL MODE
+    ENTITY Travel
+    EXECUTE ReCalcTotalPrice
+    FROM CORRESPONDING #( travel_ids ).
+*    MAPPED DATA(mapped)
+*    FAILED DATA(failed)
+*    REPORTED DATA(lt_reported).
+
+
   ENDMETHOD.
 
 ENDCLASS.
